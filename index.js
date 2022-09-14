@@ -11,7 +11,7 @@ const execution = async (job, settings, { input, params }) => {
     if (!fs.existsSync(destination)) {
       fs.mkdirSync(destination);
     }
-    let framesComplete = await processOffset(parentPath, params.maxFrames);
+    let framesComplete = await processOffset(parentPath, destination, params.maxFrames);
     let audiofile = await copyFiles(parentPath, destination, input);
     //let cmd = `render.sh ${destination} ${audiofile} ${params.frame} ${destination}/${params.output}.mp4`;
     if (framesComplete) {
