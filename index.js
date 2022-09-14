@@ -50,7 +50,7 @@ const processOffset = (parent, dest, maxFrames) => {
       let startValue = files_dest.length;
       for (let i = startValue; i < files_render.length; i++) {
         let file = files_render[i];
-        fs.renameSync(`${parent}/${file}`, `${parent}/${file}`);
+        fs.renameSync(`${parent}/${file}`, `${parent}/result_${nameFrame(i)}.png`);
       }
       resolve(files_render.length + files_dest.length === maxFrames);
     } catch (error) {
@@ -58,6 +58,15 @@ const processOffset = (parent, dest, maxFrames) => {
     }
   });
 };
+
+const nameFrame = (frame)=>{
+  let frameName = frame.toString();
+  while(frameName.length < 5)
+  {
+    frameName = "0" + frameName;
+  }
+  return frameName;
+}
 
 const clean = (path) => {
   fs.rm(path, { recursive: true }, (err) => {
