@@ -45,7 +45,8 @@ const processOffset = (parent, dest, maxFrames) => {
     try {
       let files_render = getImages(parent);
       let files_dest = getImages(dest);
-      if (files_dest.length === 0) resolve(true);
+      //if the destination does not contain any render frames then exit
+      if (files_dest.length === 0) resolve(files_render.length === maxFrames);
       let startValue = files_dest.length;
       for (let i = startValue; i < files_render.length; i++) {
         let file = files_render[i];
