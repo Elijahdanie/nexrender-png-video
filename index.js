@@ -5,6 +5,7 @@ const { exec, execSync } = require("child_process");
 const { default: axios } = require("axios");
 
 const execution = async (job, settings, { input, params }) => {
+  let uid = job.uid;
   try {
     const parentPath = settings.workpath + `/${job.uid}`;
     let outputFolder = "C://Users/Administrator/Documents/Nexrender/Output";
@@ -30,27 +31,32 @@ const execution = async (job, settings, { input, params }) => {
         console.log("cannot find result file");
       }
     } else {
-      if (params.OnError) {
-        let errorParams = '';
-        Object.keys(params.OnError.params).forEach(param=>{
-          errorParams += `${params.OnError.params[param]}/`
-        });
-        axios.get(params.OnError.errorCallback + `/${job.uid}/${errorParams}`)
-        .then(res=>{
-          console.log('Sent error callback');
-        })
-        .catch(err=>{
-          console.log(err);
-        });
-      }
+      OnErrorCallback(params, job);
       throw new Error("Frames are not complete");
       // send signal to parent to restart
     }
   } catch (error) {
     console.log(error);
+    OnErrorCallback(params, {uid});
     throw error;
   }
 };
+
+const OnErrorCallback = (params, job)=>{
+  if (params.OnError) {
+    let errorParams = '';
+    Object.keys(params.OnError.params).forEach(param=>{
+      errorParams += `${params.OnError.params[param]}/`
+    });
+    axios.get(params.OnError.errorCallback + `/${job.uid}/${errorParams}`)
+    .then(res=>{
+      console.log('Sent error callback');
+    })
+    .catch(err=>{
+      console.log(err);
+    });
+  }
+}
 
 const getImages = (path) => {
   let files = fs.readdirSync(path);
@@ -65,12 +71,13 @@ const processOffset = (parent, dest, maxFrames) => {
       //if the destination does not contain any render frames then exit
       if (files_dest.length === 0) resolve(files_render.length >= maxFrames);
       let startValue = files_dest.length - 1;
+      if(startValue < 0) startValue = 0;
+      console.log(startValue);
       for (let i = 0; i < files_render.length; i++) {
         let file = files_render[i];
         let newName = `result_${nameFrame(startValue)}.png`;
         //console.log(`${parent}/${file}`, `${parent}/${newName}`)
         let previousPath = `${parent}/${file}`;
-        console.log(previousPath);
         execSync(`mv ${previousPath} ${dest}/${newName}`);
         startValue++;
       }
