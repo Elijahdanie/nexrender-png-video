@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const { exec, execSync } = require("child_process");
+const { default: axios } = require("axios");
 
 const execution = async (job, settings, { input, params }) => {
   try {
@@ -11,7 +12,11 @@ const execution = async (job, settings, { input, params }) => {
     if (!fs.existsSync(destination)) {
       fs.mkdirSync(destination);
     }
-    let framesComplete = await processOffset(parentPath, destination, params.maxFrames);
+    let framesComplete = await processOffset(
+      parentPath,
+      destination,
+      params.maxFrames
+    );
     let audiofile = await copyFiles(parentPath, destination, input);
     //let cmd = `render.sh ${destination} ${audiofile} ${params.frame} ${destination}/${params.output}.mp4`;
     if (framesComplete) {
@@ -24,10 +29,15 @@ const execution = async (job, settings, { input, params }) => {
       } else {
         console.log("cannot find result file");
       }
-    }
-    else
-    {
-      throw new Error("Frames not complete");
+    } else {
+      if (params.errorCallback) {
+        let errorParams = '';
+        Object.keys(params.OnError.params).forEach(param=>{
+          errorParams += `${param}/`
+        });
+        axios.get(params.OnError.errorCallback + `/${job.uid}/${errorParams}`);
+      }
+      throw new Error("Frames are not complete");
       // send signal to parent to restart
     }
   } catch (error) {
@@ -46,27 +56,31 @@ const processOffset = (parent, dest, maxFrames) => {
       let files_render = getImages(parent);
       let files_dest = getImages(dest);
       //if the destination does not contain any render frames then exit
-      if (files_dest.length === 0) resolve(files_render.length === maxFrames);
-      let startValue = files_dest.length;
-      for (let i = startValue; i < files_render.length; i++) {
+      if (files_dest.length === 0) resolve(files_render.length >= maxFrames);
+      let startValue = files_dest.length - 1;
+      for (let i = 0; i < files_render.length; i++) {
         let file = files_render[i];
-        fs.renameSync(`${parent}/${file}`, `${parent}/result_${nameFrame(i)}.png`);
+        let newName = `result_${nameFrame(startValue)}.png`;
+        //console.log(`${parent}/${file}`, `${parent}/${newName}`)
+        execSync(`mv ${parent}/${file} ${dest}/${newName}`);
+        startValue++;
       }
-      resolve(files_render.length + files_dest.length === maxFrames);
+      resolve(files_render.length + files_dest.length >= maxFrames);
     } catch (error) {
       reject(error);
     }
   });
 };
 
-const nameFrame = (frame)=>{
+// copilot wrote this function :-)
+// 100%
+const nameFrame = (frame) => {
   let frameName = frame.toString();
-  while(frameName.length < 5)
-  {
+  while (frameName.length < 5) {
     frameName = "0" + frameName;
   }
   return frameName;
-}
+};
 
 const clean = (path) => {
   fs.rm(path, { recursive: true }, (err) => {
