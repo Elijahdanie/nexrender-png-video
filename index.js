@@ -30,7 +30,7 @@ const execution = async (job, settings, { input, params }) => {
         console.log("cannot find result file");
       }
     } else {
-      if (params.errorCallback) {
+      if (params.OnError) {
         let errorParams = '';
         Object.keys(params.OnError.params).forEach(param=>{
           errorParams += `${param}/`
@@ -42,6 +42,7 @@ const execution = async (job, settings, { input, params }) => {
     }
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
