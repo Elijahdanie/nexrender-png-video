@@ -1,7 +1,12 @@
 # NEXRENDER-PNG-VIDEO
 
 this package lets you convert your image sequence to an mp4 video
-using nexrender
+using nexrender, you can also specify an errorCallback Url, the current job uid
+would be appended to your callbackUrl then the error parameters
+
+if the job uid is 12RFX8S8yHJJJ and
+https://wwww.google.com is the error callbackUrl then the call would go to https://wwww.google.com/12RFX8S8yHJJJ
+if you include parameters then they would be appended to the url
 
 
 Sample job
