@@ -33,9 +33,15 @@ const execution = async (job, settings, { input, params }) => {
       if (params.OnError) {
         let errorParams = '';
         Object.keys(params.OnError.params).forEach(param=>{
-          errorParams += `${param}/`
+          errorParams += `${params.OnError.params[param]}/`
         });
-        axios.get(params.OnError.errorCallback + `/${job.uid}/${errorParams}`);
+        axios.get(params.OnError.errorCallback + `/${job.uid}/${errorParams}`)
+        .then(res=>{
+          console.log('Sent error callback');
+        })
+        .catch(err=>{
+          console.log(err);
+        });
       }
       throw new Error("Frames are not complete");
       // send signal to parent to restart
@@ -48,7 +54,7 @@ const execution = async (job, settings, { input, params }) => {
 
 const getImages = (path) => {
   let files = fs.readdirSync(path);
-  return files.filter((file) => file.includes("result"));
+  return files.filter((file) => file.includes("result_"));
 };
 
 const processOffset = (parent, dest, maxFrames) => {
@@ -63,7 +69,9 @@ const processOffset = (parent, dest, maxFrames) => {
         let file = files_render[i];
         let newName = `result_${nameFrame(startValue)}.png`;
         //console.log(`${parent}/${file}`, `${parent}/${newName}`)
-        execSync(`mv ${parent}/${file} ${dest}/${newName}`);
+        let previousPath = `${parent}/${file}`;
+        console.log(previousPath);
+        execSync(`mv ${previousPath} ${dest}/${newName}`);
         startValue++;
       }
       resolve(files_render.length + files_dest.length >= maxFrames);
