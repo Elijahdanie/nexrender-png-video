@@ -11,7 +11,14 @@ Sample job
         "input": "png",
         "params": {
             "frame": 29.97,
-            "output": "98c1adb3-0e5d-4ed3-9e35-38af21ab648e"
+            "output": "98c1adb3-0e5d-4ed3-9e35-38af21ab648e",
+            "OnError":{
+                  "errorCallback":"https://yourErrorUrl.com",
+                  "params":{
+                       "renderblockid":"0",
+                       .....
+                  }
+            }
         }
     }
 ```
