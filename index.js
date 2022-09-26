@@ -18,10 +18,11 @@ const execution = async (job, settings, { input, params }) => {
       destination,
       params.maxFrames
     );
-    let audiofile = await copyFiles(parentPath, destination, input);
+    let audioPath = getAudioFile(parentPath);
+    let audioFile = audioPath ? `-i ${audioPath}` : '';
     //let cmd = `render.sh ${destination} ${audiofile} ${params.frame} ${destination}/${params.output}.mp4`;
     if (framesComplete) {
-      let mainformat = `C://ffmpeg/ffmpeg.exe -framerate ${params.frame} -i "${destination}/result_%05d.png" -i ${audiofile} -c:a copy -shortest -c:v libx264 -pix_fmt yuv420p ${destination}/${params.output}.mp4`;
+      let mainformat = `C://ffmpeg/ffmpeg.exe -nostdin -y -framerate ${params.frame} -i "${destination}/result_%05d.png" ${audioFile}  -c:a copy -shortest -c:v libx264 -pix_fmt yuv420p ${destination}/${params.output}.mp4`;
       execSync(mainformat, { stdio: "inherit" });
       let finalOuput = `${destination}/${params.output}.mp4`;
       if (fs.existsSync(finalOuput)) {
@@ -37,7 +38,7 @@ const execution = async (job, settings, { input, params }) => {
     }
   } catch (error) {
     console.log(error);
-    OnErrorCallback(params, {uid});
+    // OnErrorCallback(params, {uid});
     throw error;
   }
 };
@@ -69,7 +70,7 @@ const processOffset = (parent, dest, maxFrames) => {
       let files_render = getImages(parent);
       let files_dest = getImages(dest);
       //if the destination does not contain any render frames then exit
-      if (files_dest.length === 0) resolve(files_render.length >= maxFrames);
+      if (files_render.length === 0) resolve(files_dest.length >= maxFrames);
       let startValue = files_dest.length - 1;
       if(startValue < 0) startValue = 0;
       console.log(startValue);
@@ -78,7 +79,9 @@ const processOffset = (parent, dest, maxFrames) => {
         let newName = `result_${nameFrame(startValue)}.png`;
         //console.log(`${parent}/${file}`, `${parent}/${newName}`)
         let previousPath = `${parent}/${file}`;
-        execSync(`mv ${previousPath} ${dest}/${newName}`);
+        let newPath = `${dest}/${newName}`;
+        console.log(previousPath);
+        fs.renameSync(`${previousPath}`, `${newPath}`);
         startValue++;
       }
       resolve(files_render.length + files_dest.length >= maxFrames);
@@ -107,25 +110,13 @@ const clean = (path) => {
   });
 };
 
-const copyFiles = (parent, target, format) => {
-  return new Promise((resolve, reject) => {
-    const path = parent;
-    let files = fs.readdirSync(parent);
+const getAudioFile =(parent) =>{
+  let files = fs.readdirSync(parent);
     let audiofileName = files.filter((file) => file.includes(".mp3"));
+    if(audiofileName.length === 0)
+      return ''
     let audiofilePath = parent + `/${audiofileName}`;
-    //copy images
-    exec(
-      `mv ${parent}/*.${format} ${audiofilePath} ${target}`,
-      (err, stdout, stderr) => {
-        if (err || stderr) {
-          console.log(stderr, err);
-          reject(err);
-        }
-        console.log(stdout);
-        resolve(`${target}/${audiofileName}`);
-      }
-    );
-  });
-};
+    return audiofilePath;
+}
 
 module.exports = execution;
