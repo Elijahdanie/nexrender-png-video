@@ -22,7 +22,8 @@ const execution = async (job, settings, { input, params }) => {
     let audioFile = audioPath ? `-i ${audioPath}` : '';
     //let cmd = `render.sh ${destination} ${audiofile} ${params.frame} ${destination}/${params.output}.mp4`;
     if (framesComplete) {
-      let mainformat = `C://ffmpeg/ffmpeg.exe -nostdin -y -framerate ${params.frame} -i "${destination}/result_%05d.png" ${audioFile}  -c:a copy -shortest -c:v libx264 -pix_fmt yuv420p ${destination}/${params.output}.mp4`;
+      params.startNumber = params.startNumber ? params.startNumber : 0;
+      let mainformat = `C://ffmpeg/ffmpeg.exe -start_number ${params.startNumber} -nostdin -y -framerate ${params.frame} -i "${destination}/result_%05d.png" ${audioFile}  -c:a copy -shortest -c:v libx264 -pix_fmt yuv420p ${destination}/${params.output}.mp4`;
       execSync(mainformat, { stdio: "inherit" });
       let finalOuput = `${destination}/${params.output}.mp4`;
       if (fs.existsSync(finalOuput)) {
@@ -76,10 +77,10 @@ const processOffset = (parent, dest, maxFrames) => {
       console.log(startValue);
       for (let i = 0; i < files_render.length; i++) {
         let file = files_render[i];
-        let newName = `result_${nameFrame(startValue)}.png`;
+        //let newName = `result_${nameFrame(startValue)}.png`;
         //console.log(`${parent}/${file}`, `${parent}/${newName}`)
         let previousPath = `${parent}/${file}`;
-        let newPath = `${dest}/${newName}`;
+        let newPath = `${dest}/${file}`;
         console.log(previousPath);
         fs.renameSync(`${previousPath}`, `${newPath}`);
         startValue++;
